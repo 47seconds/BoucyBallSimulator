@@ -181,10 +181,15 @@ void reflectionFrictionAndDamping(Circle* ball) {
 }
 
 void calculateTrajectory (Circle* ball, Path* path, int* justReleasedMouse) {
-  Point* secondLast = path->st;
-  while (secondLast->next && secondLast->next->next) secondLast = secondLast->next;
-  ball->xvel = path->top->x - secondLast->x;
-  ball->yvel = path->top->y - secondLast->y;
+  float xvel = 0, yvel = 0;
+  Point* tr = path->st;
+  while (tr->next) {
+    xvel += tr->next->x - tr->x;
+    yvel += tr->next->y - tr->y;
+    tr = tr->next;
+  } 
+  ball->xvel = xvel/path->n_points;
+  ball->yvel = yvel/path->n_points;
   *justReleasedMouse = 0;
 }
 
