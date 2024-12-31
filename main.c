@@ -1,16 +1,18 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_video.h>
 #include <math.h>
 #include <stdint.h>
 // #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #define COLOR_BLACK 0x00000000
 #define COLOR_WHITE 0xFFFFFFFF
 #define COLOR_ORANGE 0xFFA500FF
 #define RADIUS 50
-#define INIT_XVEL 50
-#define INIT_YVEL 50
+#define INIT_XVEL 0
+#define INIT_YVEL 0
 #define GRAVITY 0.2
 #define INVERSE_FRICTION_COEFF 0.996
 #define X_DAMP_COEFF 0.95
@@ -178,6 +180,14 @@ void reflectionFrictionAndDamping(Circle* ball) {
   // printf("vvel: %f, y: %f\n", ball->yvel, ball->y);
 }
 
+void calculateTrajectory (Circle* ball, Path* path, int* justReleasedMouse) {
+  Point* secondLast = path->st;
+  while (secondLast->next && secondLast->next->next) secondLast = secondLast->next;
+  ball->xvel = path->top->x - secondLast->x;
+  ball->yvel = path->top->y - secondLast->y;
+  *justReleasedMouse = 0;
+}
+
 int main(int argc, char** argv) {
   SDL_Init(SDL_INIT_VIDEO);
   SDL_Window* window = SDL_CreateWindow("Bouncy Ball Simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
@@ -198,6 +208,8 @@ int main(int argc, char** argv) {
 
   SDL_Event event;
   int simulation_running = 1;
+  int mousePressed = 0;
+  int justReleasedMouse = 0;
   while (simulation_running) {
     while (SDL_PollEvent(&event)) {
       switch (event.type) {
@@ -211,13 +223,32 @@ int main(int argc, char** argv) {
               simulation_running = 0;
               break;
           }
+
+        case SDL_MOUSEBUTTONDOWN:
+          mousePressed = 1;
+          ball->x = event.button.x;
+          ball->y = event.button.y;
+          break;
+
+        case SDL_MOUSEBUTTONUP:
+          mousePressed = 0;
+          justReleasedMouse = 1;
+          break;
+
+        case SDL_MOUSEMOTION:
+          if (mousePressed) {
+            ball->x = event.button.x;
+            ball->y = event.button.y;
+          }
+          break;
       }
     }
 
     setRendererDrawColor(renderer, COLOR_BLACK);
     SDL_RenderClear(renderer);
 
-    applyGravity(ball);
+    if (!mousePressed) applyGravity(ball);
+    if (justReleasedMouse) calculateTrajectory(ball, path, &justReleasedMouse);
     reflectionFrictionAndDamping(ball);
 
     setRendererDrawColor(renderer, COLOR_ORANGE);
