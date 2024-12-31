@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_video.h>
 #include <math.h>
 #include <stdint.h>
 // #include <stdio.h>
@@ -41,6 +42,11 @@ typedef struct Path {
   Point* top;
   int n_points;
 } Path;
+
+void enterFullScreen(SDL_Window* window) {
+  SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+  SDL_GetWindowSize(window, &WIDTH, &HEIGHT);
+}
 
 void setRendererDrawColor(SDL_Renderer* renderer, Uint32 color) {
   Uint8 r = (color >> 24) & 0xFF;
@@ -176,6 +182,8 @@ int main(int argc, char** argv) {
   SDL_Init(SDL_INIT_VIDEO);
   SDL_Window* window = SDL_CreateWindow("Bouncy Ball Simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
   SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+  enterFullScreen(window);
 
   setRendererDrawColor(renderer, COLOR_BLACK);
   SDL_RenderClear(renderer);
