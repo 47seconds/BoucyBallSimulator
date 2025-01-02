@@ -1,9 +1,6 @@
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_video.h>
 #include <math.h>
 #include <stdint.h>
-// #include <stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -20,6 +17,9 @@
 #define MIN_YVEL 1
 #define MIN_XVEL 1
 #define PATH_TRACE_LENGTH 30
+#define TRAJECTORY_AVG_SIZE 2
+#define TRAJECTORY_CALCULATION_WEIGHT 200
+#define MOUSE_SENSITIVITY 0.4
 #define getFPS(FPS) 1000/FPS
 #define SIMULATION_FPS 144
 
@@ -29,6 +29,7 @@ typedef struct Point {
   double x;
   double y;
   struct Point* next;
+  struct Point* prev;
 } Point ;
 
 typedef struct Circle {
@@ -64,6 +65,7 @@ Point* createPoint(double x, double y) {
   pt->x = x;
   pt->y = y;
   pt->next = NULL;
+  pt->prev = NULL;
   return pt;
 }
 
@@ -87,12 +89,14 @@ Path* createPath(int pathLen, Point* start) {
 
 void nextPointIntoPath(Path* path, Point* pt) {
   path->top->next = pt;
+  pt->prev = path->top;
   path->top = path->top->next;
   path->n_points++;
 
   if (path->n_points > PATH_TRACE_LENGTH) {
     Point* temp = path->st;
     path->st = path->st->next;
+    path->st->prev = NULL;
     free(temp);
     path->n_points--;
   }
@@ -119,10 +123,11 @@ void drawPath(SDL_Renderer* renderer, Path* path) {
 }
 
 void deletePath(Path* path) {
-  while (path->st) {
-    Point* temp = path->st;
+  Point* tr = path->st;
+  while (tr) {
+    Point* temp = tr;
     // printf("%d\t%f\n", path->n_points--, temp->y);
-    path->st = path->st->next;
+    tr = tr->next;
     free(temp);
   }
   free(path);
@@ -158,7 +163,6 @@ void applyGravity(Circle* ball) {
   if (ball->y < HEIGHT - ball->radius) ball->yvel += GRAVITY;
 }
 
-// Damping logic flawed maybe, ball doesn't seem to stop
 void reflectionFrictionAndDamping(Circle* ball) {
   if (ball->y >= HEIGHT - ball->radius || ball->y < ball->radius) {
     if ((ball-> y >= HEIGHT - ball->radius || ball->y <= ball->radius) && fabs(ball->yvel) <= MIN_YVEL) ball->yvel = 0;
@@ -180,16 +184,44 @@ void reflectionFrictionAndDamping(Circle* ball) {
   // printf("vvel: %f, y: %f\n", ball->yvel, ball->y);
 }
 
+void reInitiateMousePath(Path* path, Circle* ball) {
+  Point* tr = path->st;
+  while(tr) {
+    Point* temp = tr;
+    tr = tr->next;
+    free(temp);
+  }
+
+  Point* newStart = createPoint(ball->x, ball->y);
+  path->st = newStart;
+  path->top = newStart;
+  path->n_points = 1;
+}
+
 void calculateTrajectory (Circle* ball, Path* path, int* justReleasedMouse) {
   float xvel = 0, yvel = 0;
-  Point* tr = path->st;
-  while (tr->next) {
-    xvel += tr->next->x - tr->x;
-    yvel += tr->next->y - tr->y;
-    tr = tr->next;
+  int cnt = (TRAJECTORY_AVG_SIZE > path->n_points) ? path->n_points : TRAJECTORY_AVG_SIZE;
+  if (cnt == 1) {
+    ball->xvel = 0;
+    ball->yvel = 0;
+    *justReleasedMouse = 0;
+    return;
+  }
+
+  float weight = TRAJECTORY_CALCULATION_WEIGHT, weightSum = 0;
+
+  Point* tr = path->top;
+  while (tr->prev && cnt) {
+    xvel += (tr->x - tr->prev->x) * weight;
+    yvel += (tr->y - tr->prev->y) * weight;
+    tr = tr->prev;
+    weightSum += weight;
+    weight += TRAJECTORY_CALCULATION_WEIGHT;
+    cnt--;
   } 
-  ball->xvel = xvel/path->n_points;
-  ball->yvel = yvel/path->n_points;
+
+  ball->xvel = (xvel/weightSum) * MOUSE_SENSITIVITY;
+  ball->yvel = (yvel/weightSum) * MOUSE_SENSITIVITY;
   *justReleasedMouse = 0;
 }
 
@@ -233,6 +265,7 @@ int main(int argc, char** argv) {
           mousePressed = 1;
           ball->x = event.button.x;
           ball->y = event.button.y;
+          reInitiateMousePath(path, ball);
           break;
 
         case SDL_MOUSEBUTTONUP:
