@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_stdinc.h>
 #include <math.h>
 #include <stdint.h>
@@ -59,6 +60,7 @@ typedef struct Circle {
   double yvel;
   Uint32 color;
   Path* path;
+  int isInteracted;
 } Circle;
 
 // BALL->COORDS WILL BE HEAD AND PATH WILL MAKE POINTS TRACING THESE HEAD POINTS TO MAKE PATH LINKED LIST 
@@ -104,6 +106,7 @@ Circle* createBall(Point* start, int radius, double xvel, double yvel, Uint32 co
   circle->yvel = yvel;
   circle->color = color;
   circle->path = createPath(PATH_TRACE_LENGTH, start);
+  circle->isInteracted = 0;
   return circle;
 }
 
@@ -219,7 +222,7 @@ void applyGravityToBall(Circle* ball) {
 }
 
 void applyGravity(Circle** balls, int n) {
-  for (int i = 0; i < n; i++) applyGravityToBall(balls[i]);
+  for (int i = 0; i < n; i++) if (!balls[i]->isInteracted) applyGravityToBall(balls[i]);
 }
 
 void reflectionFrictionAndDampingToBall(Circle* ball) {
@@ -239,7 +242,6 @@ void reflectionFrictionAndDampingToBall(Circle* ball) {
 
     if (ball->coords-> x >= WIDTH - ball->radius) ball->coords->x = WIDTH - ball->radius;
     else ball->coords->x = ball->radius;
-    printf("this is triggerred\n");
   }
 
   // printf("vvel: %f, y: %f\n", ball->yvel, ball->y);
@@ -313,7 +315,7 @@ int main(int argc, char** argv) {
   SDL_Window* window = SDL_CreateWindow("Bouncy Ball Simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
   SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-  // enterFullScreen(window);
+  enterFullScreen(window);
 
   setRendererDrawColor(renderer, COLOR_BLACK);
   SDL_RenderClear(renderer);
@@ -340,25 +342,25 @@ int main(int argc, char** argv) {
               simulation_running = 0;
               break;
           }
+      }
 
-        // case SDL_MOUSEBUTTONDOWN:
-        //   mousePressed = 1;
-        //   ball1->x = event.button.x;
-        //   ball1->y = event.button.y;
-        //   reInitiateMousePath(path1, ball1);
-        //   break;
-        //
-        // case SDL_MOUSEBUTTONUP:
-        //   mousePressed = 0;
-        //   justReleasedMouse = 1;
-        //   break;
-        //
-        // case SDL_MOUSEMOTION:
-        //   if (mousePressed) {
-        //     ball1->x = event.button.x;
-        //     ball1->y = event.button.y;
-        //   }
-        //   break;
+      if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEMOTION) {
+        Circle* WBall = whichBallInBallInteraction(balls, N_BALLS, event.button.x, event.button.y);
+
+        if (event.type == SDL_MOUSEBUTTONDOWN && WBall) {
+          mousePressed = 1;
+          WBall->isInteracted = 1;
+          WBall->coords->x = event.button.x;
+          WBall->coords->y = event.button.y;
+          reInitiateMousePath(WBall);
+        } else if (event.type == SDL_MOUSEBUTTONUP && WBall) {
+          mousePressed = 0;
+          justReleasedMouse = 1;
+          if (WBall->isInteracted) WBall->isInteracted = 0;
+        } else if (WBall && WBall->isInteracted) {
+          WBall->coords->x = event.button.x;
+          WBall->coords->y = event.button.y;
+        }
       }
     }
 
