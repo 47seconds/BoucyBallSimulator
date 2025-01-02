@@ -31,7 +31,7 @@
 #define TRAJECTORY_AVG_SIZE 2
 #define TRAJECTORY_CALCULATION_WEIGHT 200
 #define MOUSE_SENSITIVITY 0.4
-#define N_BALLS 1
+#define N_BALLS 5
 #define getFPS(FPS) 1000/FPS
 #define SIMULATION_FPS 144
 
@@ -374,7 +374,7 @@ int main(int argc, char** argv) {
 
     nextPointsIntoPaths(balls, N_BALLS);
     // printf("%d\n", i++);
-    // drawPaths(renderer, balls, N_BALLS);
+    drawPaths(renderer, balls, N_BALLS);
 
     drawBalls(renderer, balls, N_BALLS);
     SDL_RenderPresent(renderer);
