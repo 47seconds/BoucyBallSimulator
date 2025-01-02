@@ -31,7 +31,7 @@
 #define TRAJECTORY_AVG_SIZE 2
 #define TRAJECTORY_CALCULATION_WEIGHT 200
 #define MOUSE_SENSITIVITY 0.4
-#define N_BALLS 2
+#define N_BALLS 1
 #define getFPS(FPS) 1000/FPS
 #define SIMULATION_FPS 144
 
@@ -61,6 +61,8 @@ typedef struct Circle {
   Path* path;
 } Circle;
 
+// BALL->COORDS WILL BE HEAD AND PATH WILL MAKE POINTS TRACING THESE HEAD POINTS TO MAKE PATH LINKED LIST 
+
 void enterFullScreen(SDL_Window* window) {
   SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
   SDL_GetWindowSize(window, &WIDTH, &HEIGHT);
@@ -85,9 +87,10 @@ Point* createPoint(double x, double y) {
 }
 
 Path* createPath(int pathLen, Point* start) {
+  Point* pt = createPoint(start->x, start->y);
   Path* path = (Path*)malloc(sizeof(Path));
-  path->st = start;
-  path->top = start;
+  path->st = pt;
+  path->top = pt;
   path->n_points = 1;
   return path;
 }
@@ -118,7 +121,7 @@ void nextPointIntoPath(Circle* ball) {
 
   ball->path->top->next = pt;
   pt->prev = ball->path->top;
-  ball->path->top = ball->path->top->next;
+  ball->path->top = pt;
   ball->path->n_points++;
 
   if (ball->path->n_points > PATH_TRACE_LENGTH) {
@@ -147,24 +150,15 @@ void printPath(Path* path) {
 }
 
 void drawPathForBall(SDL_Renderer* renderer, Circle* ball, int i) {
-  printf("%c\n", 'a' + i);
-
   setRendererDrawColor(renderer, ball->color);
-  printf("%c\n", 'a' + i + 1);
   Point* tr = ball->path->st;
-  printf("%c\n", 'a' + i + 2);
-  // while (tr->next) {
-  //   printf("%c\n", 'a' + i + 3);
-  //   SDL_RenderDrawLine(renderer, tr->x, tr->y, tr->next->x, tr->next->y);
-  //   printf("%c\n", 'a' + i + 4);
-  //   tr = tr->next;
-  // }
-  // printPath(ball->path);
-  printf("%d\n", ball->path->n_points);
+  while (tr->next) {
+    SDL_RenderDrawLine(renderer, tr->x, tr->y, tr->next->x, tr->next->y);
+    tr = tr->next;
+  }
 }
 
 void drawPaths(SDL_Renderer* renderer, Circle** balls, int n) {
-  printf("Drawing different paths\n");
   for (int i = 0; i < n; i++) drawPathForBall(renderer, balls[i], i);
 }
 
@@ -209,7 +203,7 @@ void drawBalls(SDL_Renderer* renderer, Circle** balls, int n) {
 
 void deleteBall(Circle* ball) {
   deletePath(ball);
-  free(ball->coords); // Since ball->path->top is ball->coords themselves, double free()
+  // free(ball->coords); // Since ball->path->top is ball->coords themselves, double free()
   free(ball);
 }
 
@@ -228,7 +222,7 @@ void applyGravity(Circle** balls, int n) {
   for (int i = 0; i < n; i++) applyGravityToBall(balls[i]);
 }
 
-void reflectionFrictionAndDampingToBall(Circle* ball, int i) {
+void reflectionFrictionAndDampingToBall(Circle* ball) {
   if (ball->coords->y >= HEIGHT - ball->radius || ball->coords->y < ball->radius) {
     if ((ball->coords->y >= HEIGHT - ball->radius || ball->coords->y <= ball->radius) && fabs(ball->yvel) <= MIN_YVEL) ball->yvel = 0;
     else ball->yvel = (-1) * (ball->yvel * Y_DAMP_COEFF);
@@ -242,15 +236,17 @@ void reflectionFrictionAndDampingToBall(Circle* ball, int i) {
   if (ball->coords->x >= WIDTH - ball->radius || ball->coords->x < ball->radius) {
     if (((ball->coords->x >= WIDTH - ball->radius || ball->coords->x <= ball->radius) && fabs(ball->xvel) <= MIN_XVEL)) ball->xvel = 0;
     else ball->xvel = (-1) * (ball->xvel * X_DAMP_COEFF);
+
     if (ball->coords-> x >= WIDTH - ball->radius) ball->coords->x = WIDTH - ball->radius;
     else ball->coords->x = ball->radius;
+    printf("this is triggerred\n");
   }
 
   // printf("vvel: %f, y: %f\n", ball->yvel, ball->y);
 }
 
 void reflectionFrictionAndDamping(Circle** balls, int n){
-  for (int i = 0; i < n; i++) reflectionFrictionAndDampingToBall(balls[i], i);
+  for (int i = 0; i < n; i++) reflectionFrictionAndDampingToBall(balls[i]);
 }
 
 void reInitiateMousePath(Circle* ball) {
@@ -327,9 +323,6 @@ int main(int argc, char** argv) {
   drawBalls(renderer, balls, N_BALLS);
   SDL_RenderPresent(renderer);
 
-  int i = 0;
-  printf("%d\n", i++);
-
   SDL_Event event;
   int simulation_running = 1;
   int mousePressed = 0;
@@ -369,34 +362,22 @@ int main(int argc, char** argv) {
       }
     }
 
-    printf("%d\n", i++);
-
     setRendererDrawColor(renderer, COLOR_BLACK);
     SDL_RenderClear(renderer);
 
-    printf("%d\n", i++);
-
     // if (!mousePressed) applyGravity(ball1);
     applyGravity(balls, N_BALLS);
-
-    printf("%d\n", i++);
 
     // if (justReleasedMouse) calculateTrajectory(ball1, path1, &justReleasedMouse);
 
     reflectionFrictionAndDamping(balls, N_BALLS);
 
-    printf("%d\n", i++);
-
     nextPointsIntoPaths(balls, N_BALLS);
-    printf("%d\n", i++);
-    drawPaths(renderer, balls, N_BALLS);
-
-    printf("%d\n", i++);
+    // printf("%d\n", i++);
+    // drawPaths(renderer, balls, N_BALLS);
 
     drawBalls(renderer, balls, N_BALLS);
     SDL_RenderPresent(renderer);
-
-    printf("%d\n", i++);
 
     SDL_Delay(getFPS(SIMULATION_FPS));
   }
