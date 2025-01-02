@@ -345,19 +345,22 @@ int main(int argc, char** argv) {
       }
 
       if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEMOTION) {
+        // Finding on which ball we hovering ouse on
         Circle* WBall = whichBallInBallInteraction(balls, N_BALLS, event.button.x, event.button.y);
 
-        if (event.type == SDL_MOUSEBUTTONDOWN && WBall) {
+        if (event.type == SDL_MOUSEBUTTONDOWN && WBall) { // When moused hovered over a ball and clicked
           mousePressed = 1;
+          justReleasedMouse = 0;
           WBall->isInteracted = 1;
           WBall->coords->x = event.button.x;
           WBall->coords->y = event.button.y;
-          reInitiateMousePath(WBall);
-        } else if (event.type == SDL_MOUSEBUTTONUP && WBall) {
+          reInitiateMousePath(WBall); // DEPRECATED: When mouse if clicked on a ball, remove path since a new path will be generated from user interaction, therefore no need to weight average old unrelated path points
+        } else if (event.type == SDL_MOUSEBUTTONUP && WBall) { // When we hovered over a ball and released our mouse button, reset its state and calculate its trajectory
           mousePressed = 0;
           justReleasedMouse = 1;
-          if (WBall->isInteracted) WBall->isInteracted = 0;
-        } else if (WBall && WBall->isInteracted) {
+          WBall->isInteracted = 0;
+          calculateTrajectory(WBall, &justReleasedMouse);
+        } else if (WBall && WBall->isInteracted) { // When user is interacting with the mouse
           WBall->coords->x = event.button.x;
           WBall->coords->y = event.button.y;
         }
@@ -369,8 +372,6 @@ int main(int argc, char** argv) {
 
     // if (!mousePressed) applyGravity(ball1);
     applyGravity(balls, N_BALLS);
-
-    // if (justReleasedMouse) calculateTrajectory(ball1, path1, &justReleasedMouse);
 
     reflectionFrictionAndDamping(balls, N_BALLS);
 
