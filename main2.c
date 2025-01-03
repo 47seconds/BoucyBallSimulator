@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define COLOR_BLACK 0x00000000
 #define COLOR_WHITE 0xFFFFFFFF
@@ -33,7 +34,8 @@
 #define TRAJECTORY_AVG_SIZE 2
 #define TRAJECTORY_CALCULATION_WEIGHT 200
 #define MOUSE_SENSITIVITY 0.4
-#define N_BALLS 5
+#define BALLS_IN_SIMULATION 5
+#define MAXIMUM_BALLS_IN_SIMULATION_ALLOWED 300
 #define getFPS(FPS) 1000/FPS
 #define SIMULATION_FPS 144
 
@@ -375,7 +377,30 @@ void applyCollisionMechanics(Circle** balls, int n) {
   }
 }
 
+int charArgtoInt(char* arg) {
+  int num = 0, i = 0, n = strlen(arg);
+  if (!n) return 0;
+
+  while (i < n) {
+    if (arg[i] > '9' || arg[i] < '0') return 0;
+    num = num * 10 + (arg[i] - '0');
+    i++;
+  }
+
+  return num;
+}
+
+void capBallsCount(int* n) {
+  printf("NUMBERED ENTERED EXCEEDS MAXIMUM LIMIT SET: %d\nPARSE 1 AS ADDITIONAL ARGUMENT TO DISABLE BALL-COUNT CAP.\n", MAXIMUM_BALLS_IN_SIMULATION_ALLOWED);
+  if (*n > MAXIMUM_BALLS_IN_SIMULATION_ALLOWED) *n = BALLS_IN_SIMULATION;
+}
+
 int main(int argc, char** argv) {
+
+  int N_BALLS = argc ? (charArgtoInt(argv[1]) == 0 ? 1 : charArgtoInt(argv[1])) : BALLS_IN_SIMULATION;
+  int CapEnabled = argc > 2 ? (charArgtoInt(argv[2]) == 1 ? 0 : 1) : 1;
+  if (CapEnabled) capBallsCount(&N_BALLS);
+
   SDL_Init(SDL_INIT_VIDEO);
   SDL_Window* window = SDL_CreateWindow("Bouncy Ball Simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
   SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -463,3 +488,6 @@ int main(int argc, char** argv) {
 
   return 0;
 }
+
+// COMPILE: gcc -o main2 main2.c `sdl2-config --cflags --libs` -lm
+// RUN: main2 <(optional) no. of balls>
