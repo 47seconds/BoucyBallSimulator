@@ -294,7 +294,9 @@ void calculateTrajectory (Circle* ball, int* justReleasedMouse) {
 }
 
 double calcPValue(Circle* ball, double x, double y) {
-  double x_sq = (ball->coords->x - x), y_sq = (ball->coords->y - y), rad_sq = ball->radius;
+  double x_sq = (ball->coords->x - x);
+  double y_sq = (ball->coords->y - y);
+  double rad_sq = ball->radius;
   x_sq *= x_sq, y_sq *= y_sq, rad_sq *= rad_sq;
 
   double p_val = x_sq + y_sq - rad_sq;
@@ -316,18 +318,19 @@ void collisionTrajectory(Circle* ball1, Circle* ball2) {
 
   if (!distance) return;
 
-  // Normal vectors
+  // Normal vectors along line of impact
   double nx = dx / distance;
   double ny = dy / distance;
 
-  // Tangent vectors
+  // Tangent vectors perpendicular to line of impact, NOT THE COORDINATE GEOMETRY (DISINTEGRATING_CRYING_EMOJI.GIF)
   double tx = -ny;
   double ty = nx;
   
+  // Readjusting the colling balls coordinates so they don't just get embedded
   double rad_dist = ball1->radius + ball2->radius;
   double rad_dist_diff = fabs(rad_dist - distance);
   if (rad_dist_diff >= 0) {
-    // Focus on vector directions
+    // Focus on vector directions, ANOTHER MOTION PHYSICS AND COORDINATE GEOMETRY, TIRED OF WATCHING MORE PHYSICS WALLAH LECTURES
     ball1->coords->x -= (rad_dist_diff / 2) * nx;
     ball1->coords->y -= (rad_dist_diff / 2) * ny;
     ball2->coords->x += (rad_dist_diff / 2) * nx;
@@ -335,21 +338,21 @@ void collisionTrajectory(Circle* ball1, Circle* ball2) {
     
   }
 
-  // Dot product of the velocity vectors with the normal and tangent
+  // Dot product of the velocity vectors with the normal and tangent, need to make sure velocities in tangest directions remains same and change only in line of impact direction, thus making it simulate like a 1D collision
   double dpTan1 = ball1->xvel * tx + ball1->yvel * ty;
   double dpTan2 = ball2->xvel * tx + ball2->yvel * ty;
 
   double dpNorm1 = ball1->xvel * nx + ball1->yvel * ny;
   double dpNorm2 = ball2->xvel * nx + ball2->yvel * ny;
 
-  // Calculate the relative normal velocity
+  // Calculate the relative normal velocity to get final velocities after COEFF_OF_RESTITUTION damping of balls
   double relativeNormalVelocity = dpNorm2 - dpNorm1;
 
-  // Update normal velocities using the coefficient of restitution
-  double v1n = dpNorm1 + (1 + COEFF_OF_RESTITUTION) * ball2->radius / (ball1->radius + ball2->radius) * relativeNormalVelocity;
-  double v2n = dpNorm2 - (1 + COEFF_OF_RESTITUTION) * ball1->radius / (ball1->radius + ball2->radius) * relativeNormalVelocity;
+  // Update normal velocities using the coefficient of restitution, e = (relocity of separation)/(velocity of approach), therefore updating final velocities with COEFF_OF_RESTITUTION and since mass density is same for balls, we can distribute momentum assosiated with mass with radii of balls
+  double v1n = dpNorm1 + (1 + COEFF_OF_RESTITUTION) * (ball2->radius / (ball1->radius + ball2->radius)) * relativeNormalVelocity;
+  double v2n = dpNorm2 - (1 + COEFF_OF_RESTITUTION) * (ball1->radius / (ball1->radius + ball2->radius)) * relativeNormalVelocity;
 
-  // Convert the scalar normal and tangent velocities into vectors
+  // Convert the normal and tangent velocities into vectors, like xvel = TangentVel * tangent-x-component-cap + final-velocity * normal-x-component-cap
   ball1->xvel = tx * dpTan1 + nx * v1n;
   ball1->yvel = ty * dpTan1 + ny * v1n;
 
