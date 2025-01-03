@@ -406,7 +406,7 @@ int main(int argc, char** argv) {
   SDL_Window* window = SDL_CreateWindow("Bouncy Ball Simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
   SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-  // enterFullScreen(window);
+  enterFullScreen(window);
 
   setRendererDrawColor(renderer, COLOR_BLACK);
   SDL_RenderClear(renderer);
