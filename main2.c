@@ -391,8 +391,9 @@ int charArgtoInt(char* arg) {
 }
 
 void capBallsCount(int* n) {
+  if (*n <= MAXIMUM_BALLS_IN_SIMULATION_ALLOWED) return;
   printf("NUMBERED ENTERED EXCEEDS MAXIMUM LIMIT SET: %d\nPARSE 1 AS ADDITIONAL ARGUMENT TO DISABLE BALL-COUNT CAP.\n", MAXIMUM_BALLS_IN_SIMULATION_ALLOWED);
-  if (*n > MAXIMUM_BALLS_IN_SIMULATION_ALLOWED) *n = BALLS_IN_SIMULATION;
+  *n = BALLS_IN_SIMULATION;
 }
 
 int main(int argc, char** argv) {
