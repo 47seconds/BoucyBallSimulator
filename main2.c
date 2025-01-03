@@ -28,7 +28,7 @@
 #define Y_DAMP_COEFF 0.8
 #define MIN_YVEL 1
 #define MIN_XVEL 1
-#define COEFF_OF_RESTITUTION 0.9
+#define COEFF_OF_RESTITUTION 0.8
 #define PATH_TRACE_LENGTH 30
 #define TRAJECTORY_AVG_SIZE 2
 #define TRAJECTORY_CALCULATION_WEIGHT 200
@@ -56,7 +56,7 @@ typedef struct Path {
 
 typedef struct Circle {
   Point* coords;
-  int radius;
+  double radius;
   double xvel;
   double yvel;
   Uint32 color;
@@ -310,10 +310,53 @@ Circle* whichBallInBallInteraction(Circle** balls, int n, double x, double y) {
 }
 
 void collisionTrajectory(Circle* ball1, Circle* ball2) {
-  printf("%d and %d collided\n", ball1->color, ball2->color);
+  double dx = ball2->coords->x - ball1->coords->x;
+  double dy = ball2->coords->y - ball1->coords->y;
+  double distance = sqrt(dx * dx + dy * dy);
+
+  if (!distance) return;
+
+  // Normal vectors
+  double nx = dx / distance;
+  double ny = dy / distance;
+
+  // Tangent vectors
+  double tx = -ny;
+  double ty = nx;
+  
+  double rad_dist = ball1->radius + ball2->radius;
+  double rad_dist_diff = fabs(rad_dist - distance);
+  if (rad_dist_diff >= 0) {
+    // Focus on vector directions
+    ball1->coords->x -= (rad_dist_diff / 2) * nx;
+    ball1->coords->y -= (rad_dist_diff / 2) * ny;
+    ball2->coords->x += (rad_dist_diff / 2) * nx;
+    ball2->coords->y += (rad_dist_diff / 2) * ny;
+    
+  }
+
+  // Dot product of the velocity vectors with the normal and tangent
+  double dpTan1 = ball1->xvel * tx + ball1->yvel * ty;
+  double dpTan2 = ball2->xvel * tx + ball2->yvel * ty;
+
+  double dpNorm1 = ball1->xvel * nx + ball1->yvel * ny;
+  double dpNorm2 = ball2->xvel * nx + ball2->yvel * ny;
+
+  // Calculate the relative normal velocity
+  double relativeNormalVelocity = dpNorm2 - dpNorm1;
+
+  // Update normal velocities using the coefficient of restitution
+  double v1n = dpNorm1 + (1 + COEFF_OF_RESTITUTION) * ball2->radius / (ball1->radius + ball2->radius) * relativeNormalVelocity;
+  double v2n = dpNorm2 - (1 + COEFF_OF_RESTITUTION) * ball1->radius / (ball1->radius + ball2->radius) * relativeNormalVelocity;
+
+  // Convert the scalar normal and tangent velocities into vectors
+  ball1->xvel = tx * dpTan1 + nx * v1n;
+  ball1->yvel = ty * dpTan1 + ny * v1n;
+
+  ball2->xvel = tx * dpTan2 + nx * v2n;
+  ball2->yvel = ty * dpTan2 + ny * v2n;
 }
 
-// IMPLEMENT COLLISSION DETECTION
 void applyCollisionMechanics(Circle** balls, int n) {
   float dist_sq = 0, x_sq = 0, y_sq = 0, rad_sq = 0;
   for (int i = 0; i < n - 1; i++) {
@@ -383,6 +426,8 @@ int main(int argc, char** argv) {
         } else if (WBall && WBall->isInteracted) { // When user is interacting with the mouse
           WBall->coords->x = event.button.x;
           WBall->coords->y = event.button.y;
+          WBall->xvel = event.button.x - WBall->path->top->x;
+          WBall->yvel = event.button.y - WBall->path->top->y;
         }
       }
     }
@@ -395,7 +440,7 @@ int main(int argc, char** argv) {
 
     reflectionFrictionAndDamping(balls, N_BALLS);
 
-    // applyCollisionMechanics(balls, N_BALLS);
+    applyCollisionMechanics(balls, N_BALLS);
 
     nextPointsIntoPaths(balls, N_BALLS);
     // printf("%d\n", i++);
