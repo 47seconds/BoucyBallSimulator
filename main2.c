@@ -28,6 +28,7 @@
 #define Y_DAMP_COEFF 0.8
 #define MIN_YVEL 1
 #define MIN_XVEL 1
+#define COEFF_OF_RESTITUTION 0.9
 #define PATH_TRACE_LENGTH 30
 #define TRAJECTORY_AVG_SIZE 2
 #define TRAJECTORY_CALCULATION_WEIGHT 200
@@ -308,7 +309,25 @@ Circle* whichBallInBallInteraction(Circle** balls, int n, double x, double y) {
   return NULL;
 }
 
+void collisionTrajectory(Circle* ball1, Circle* ball2) {
+  printf("%d and %d collided\n", ball1->color, ball2->color);
+}
+
 // IMPLEMENT COLLISSION DETECTION
+void applyCollisionMechanics(Circle** balls, int n) {
+  float dist_sq = 0, x_sq = 0, y_sq = 0, rad_sq = 0;
+  for (int i = 0; i < n - 1; i++) {
+    for (int j = i + 1; j < n; j++) {
+      x_sq = balls[i]->coords->x - balls[j]->coords->x;
+      y_sq = balls[i]->coords->y - balls[j]->coords->y;
+      rad_sq = balls[i]->radius + balls[j]->radius;
+      x_sq *= x_sq, y_sq *= y_sq, rad_sq *= rad_sq;
+
+      dist_sq = x_sq + y_sq;
+      if (dist_sq <= rad_sq) collisionTrajectory(balls[i], balls[j]);
+    }
+  }
+}
 
 int main(int argc, char** argv) {
   SDL_Init(SDL_INIT_VIDEO);
@@ -329,6 +348,7 @@ int main(int argc, char** argv) {
   int simulation_running = 1;
   int mousePressed = 0;
   int justReleasedMouse = 0;
+  Circle* WBall = NULL;
   while (simulation_running) {
     while (SDL_PollEvent(&event)) {
       switch (event.type) {
@@ -346,7 +366,7 @@ int main(int argc, char** argv) {
 
       if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEMOTION) {
         // Finding on which ball we hovering ouse on
-        Circle* WBall = whichBallInBallInteraction(balls, N_BALLS, event.button.x, event.button.y);
+        if (!WBall || (WBall && !WBall->isInteracted)) WBall = whichBallInBallInteraction(balls, N_BALLS, event.button.x, event.button.y); // Only look for Ball when we have no ball initially or the hovered ball->isInteracted is off 
 
         if (event.type == SDL_MOUSEBUTTONDOWN && WBall) { // When moused hovered over a ball and clicked
           mousePressed = 1;
@@ -374,6 +394,8 @@ int main(int argc, char** argv) {
     applyGravity(balls, N_BALLS);
 
     reflectionFrictionAndDamping(balls, N_BALLS);
+
+    // applyCollisionMechanics(balls, N_BALLS);
 
     nextPointsIntoPaths(balls, N_BALLS);
     // printf("%d\n", i++);
