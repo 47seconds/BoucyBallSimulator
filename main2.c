@@ -378,8 +378,8 @@ void applyCollisionMechanics(Circle** balls, int n) {
 }
 
 int charArgtoInt(char* arg) {
+  if (!arg) return 0;
   int num = 0, i = 0, n = strlen(arg);
-  if (!n) return 0;
 
   while (i < n) {
     if (arg[i] > '9' || arg[i] < '0') return 0;
@@ -406,7 +406,7 @@ int main(int argc, char** argv) {
   SDL_Window* window = SDL_CreateWindow("Bouncy Ball Simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
   SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-  enterFullScreen(window);
+  // enterFullScreen(window);
 
   setRendererDrawColor(renderer, COLOR_BLACK);
   SDL_RenderClear(renderer);
