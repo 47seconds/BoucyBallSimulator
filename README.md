@@ -2,7 +2,7 @@
 
 A simple graphics application built in C that simulates the motion of a ball within a closed environment. This simulation incorporates basic physics principles such as gravity, friction, and wall damping.
 
-**Check the [Releases](https://github.com/47seconds/BoucyBallSimulator.git) page to test it out yourself!**
+**Check the [Releases](https://github.com/47seconds/BouncyBallSimulator.git) page to test it out yourself!**
 
 ## Features
 
@@ -23,8 +23,8 @@ Ensure you have the following installed on your system:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/47seconds/BoucyBallSimulator.git
-   cd BoucyBallSimulator
+   git clone https://github.com/47seconds/BouncyBallSimulator.git
+   cd BouncyBallSimulator
    ```
 2. Install the SDL2 library:
 
@@ -43,8 +43,8 @@ Ensure you have the following installed on your system:
      - Refer to [this](https://www.youtube.com/watch?v=H08t6gD1Y1E&t=98s&ab_channel=HerbGlitch) video. Note that this is not the best way of doing things.
    1. Select the **SDL version 2** from [releases](https://github.com/libsdl-org/SDL/releases/) and downlaod **SDL2-devel-2.xx.xx-mingw.zip**.
    2. Extract the files in a folder.
-   3. Go to: **SDL2-2.xx.xx > i686-w64-mingw32** and copy **include** and **lib** folders and paste these folders in **BoucyBallSimulator > src** (make a src directory yourself).
-   4. Also copy **SDL2-2.xx.xx > i686-w64-mingw32 > bin > SDL2.dll** into **BoucyBallSimulator**.
+   3. Go to: **SDL2-2.xx.xx > i686-w64-mingw32** and copy **include** and **lib** folders and paste these folders in **BouncyBallSimulator > src** (make a src directory yourself).
+   4. Also copy **SDL2-2.xx.xx > i686-w64-mingw32 > bin > SDL2.dll** into **BouncyBallSimulator**.
 
 3. Compile the source code:
    - **Linux:**
