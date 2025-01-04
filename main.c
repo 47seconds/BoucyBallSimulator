@@ -313,3 +313,6 @@ int main(int argc, char** argv) {
 
   return 0;
 }
+
+// COMPILE: gcc -o main main.c `sdl2-config --cflags --libs` -lm
+// RUN: main

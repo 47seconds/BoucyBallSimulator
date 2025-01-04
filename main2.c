@@ -491,4 +491,4 @@ int main(int argc, char** argv) {
 }
 
 // COMPILE: gcc -o main2 main2.c `sdl2-config --cflags --libs` -lm
-// RUN: main2 <(optional) no. of balls>
+// RUN: main2 <(optional) no. of balls> <(optional) Disable Ball capping>
