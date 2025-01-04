@@ -398,7 +398,7 @@ void capBallsCount(int* n) {
 
 int main(int argc, char** argv) {
 
-  int N_BALLS = argc ? (charArgtoInt(argv[1]) == 0 ? 1 : charArgtoInt(argv[1])) : BALLS_IN_SIMULATION;
+  int N_BALLS = argc ? (charArgtoInt(argv[1]) == 0 ? BALLS_IN_SIMULATION : charArgtoInt(argv[1])) : BALLS_IN_SIMULATION;
   int CapEnabled = argc > 2 ? (charArgtoInt(argv[2]) == 1 ? 0 : 1) : 1;
   if (CapEnabled) capBallsCount(&N_BALLS);
 
